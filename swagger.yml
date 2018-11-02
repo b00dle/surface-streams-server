@@ -1,0 +1,171 @@
+swagger: "2.0"
+info:
+  description: Python, Flask and Connexion server exposing GStreamer udp stream video composition functionality. SurfaceStreams enables merging of video streams based on alpha keying. Clients register with this server to provide their video stream and receive a merged stream from all other clients back.
+  version: "1.0.0"
+  title: SurfaceStreams Server ReST Article
+consumes:
+  - application/json
+produces:
+  - application/json
+
+basePath: /api
+
+# Paths supported by the server application
+paths:
+  /clients:
+    get:
+      operationId: clients.read_all
+      tags:
+        - clients
+      summary: Read the entire list of clients
+      description: Read the list of clients
+      parameters:
+        - name: length
+          in: query
+          type: integer
+          description: Number of clients to get from clients
+          required: false
+        - name: offset
+          in: query
+          type: integer
+          description: Offset from beginning of list where to start gathering clients
+          required: false
+      responses:
+        200:
+          description: Successfully read clients list operation
+          schema:
+            type: array
+            items:
+              properties:
+                name:
+                  type: string
+                uuid:
+                  type: string
+                in-ip:
+                  type: string
+                in-port:
+                  type: integer
+                out-ip:
+                  type: string
+                out-port:
+                  type: integer
+                timestamp:
+                  type: string
+
+    post:
+      operationId: clients.create
+      tags:
+        - clients
+      summary: Create a client and add it to the clients list
+      description: Create a new client in the clients list
+      parameters:
+        - name: client
+          in: body
+          description: Person to create
+          required: True
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of client to create
+              in-ip:
+                type: string
+                description: IP for incoming client stream
+              in-port:
+                type: integer
+                description: Port for incoming client stream
+      responses:
+        201:
+          description: Successfully created client in list
+          schema:
+            properties:
+              name:
+                type: string
+              uuid:
+                type: string
+              in-ip:
+                type: string
+              in-port:
+                type: integer
+              out-ip:
+                type: string
+              out-port:
+                type: integer
+              timestamp:
+                type: string
+
+  /clients/{uuid}:
+    get:
+      operationId: clients.read_one
+      tags:
+        - clients
+      summary: Read one client from the clients list
+      description: Read one client from the clients list
+      parameters:
+        - name: uuid
+          in: path
+          description: uuid of the client to get from the list
+          type: string
+          required: True
+      responses:
+        200:
+          description: Successfully read client from clients list operation
+          schema:
+            properties:
+              name:
+                type: string
+              uuid:
+                type: string
+              in-ip:
+                type: string
+              in-port:
+                type: integer
+              out-ip:
+                type: string
+              out-port:
+                type: integer
+              timestamp:
+                type: string
+
+    put:
+      operationId: clients.update
+      tags:
+        - clients
+      summary: Update a client in the clients list
+      description: Update a client in the clients list
+      parameters:
+        - name: uuid
+          in: path
+          description: Last name of the client to update in the list
+          type: string
+          required: True
+        - name: client
+          in: body
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              in-ip:
+                type: string
+              in-port:
+                type: integer
+      responses:
+        200:
+          description: Successfully updated client in clients list
+
+    delete:
+      operationId: clients.delete
+      tags:
+        - clients
+      summary: Delete a client from the clients list
+      description: Delete a client
+      parameters:
+        - name: uuid
+          in: path
+          type: string
+          required: True
+      responses:
+        200:
+          description: Successfully deleted a client from clients list
