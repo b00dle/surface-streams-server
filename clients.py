@@ -6,6 +6,7 @@ CLIENTS collection
 # System modules
 from datetime import datetime
 import uuid
+import streaming
 
 # 3rd party modules
 from flask import make_response, abort
@@ -37,15 +38,15 @@ CLIENT_LIMIT = 3
 TEST_CLIENT = {
     "name": "Bilbo Baggins",
     "uuid": create_uuid(),
-    "in-ip": "127.0.0.1",
+    "in-ip": "0.0.0.0",
     "in-port": 5001,
-    "out-ip": "127.0.0.1",
+    "out-ip": "0.0.0.0",
     "out-port": 5002,
     "timestamp": create_timestamp()
 }
 
 CLIENTS = {
-    TEST_CLIENT["uuid"]: TEST_CLIENT
+    #TEST_CLIENT["uuid"]: TEST_CLIENT
 }
 
 
@@ -64,10 +65,11 @@ def create_client(name, in_ip, in_port):
         "uuid": uuid,
         "in-ip": in_ip,
         "in-port": in_port,
-        "out-ip": "127.0.0.1",
+        "out-ip": "0.0.0.0",
         "out-port": 5000 + len(CLIENTS) + 1,
         "timestamp": create_timestamp()
     }
+    streaming.create_loopback_thread(uuid, in_port)#, client["out-port"], client["out-ip"])
     return uuid, client
 
 
@@ -95,7 +97,8 @@ def read_one(uuid):
     # otherwise, nope, not found
     else:
         abort(
-            404, "Client with uuid {uuid} not found".format(uuid=uuid)
+            404,
+            "Client with uuid {uuid} not found".format(uuid=uuid)
         )
 
 
@@ -111,7 +114,8 @@ def create(client):
     in_port = client.get("in-port", None)
 
     if len(CLIENTS) >= CLIENT_LIMIT:
-        abort(406,
+        abort(
+            406,
             "Client list already at maximum capacity"
         )
     else:
@@ -138,7 +142,8 @@ def update(uuid, client):
     # otherwise, nope, that's an error
     else:
         abort(
-            404, "Client with uuid {uuid} not found".format(uuid=uuid)
+            404,
+            "Client with uuid {uuid} not found".format(uuid=uuid)
         )
 
 
@@ -152,12 +157,19 @@ def delete(uuid):
     if uuid in CLIENTS:
         name = CLIENTS[uuid]["name"]
         del CLIENTS[uuid]
-        return make_response(
-            "{name} successfully deleted at uuid={uuid}".format(name=name, uuid=uuid), 200
-        )
+        if streaming.remove_pipeline(uuid):
+            return make_response(
+                "{name} successfully deleted at uuid={uuid}".format(name=name, uuid=uuid), 200
+            )
+        else:
+            abort(
+                406,
+                "could not delete {name} at uuid={uuid}".format(name=name, uuid=uuid)
+            )
 
     # Otherwise, nope, client to delete not found
     else:
         abort(
-            404, "Client with uuid {uuid} not found".format(uuid=uuid)
+            404,
+            "Client with uuid {uuid} not found".format(uuid=uuid)
         )
