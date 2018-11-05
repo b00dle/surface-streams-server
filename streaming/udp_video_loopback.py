@@ -47,8 +47,8 @@ class UdpVideoLoopback(GstPipeline):
     def set_in_port(self, port):
         self.udp_src.set_property("port", port)
 
-    def set_in_address(self, address):
-        self.udp_src.set_property("address", address)
+    def set_out_address(self, address):
+        self.udp_sink.set_property("host", address)
 
     def set_out_port(self, port):
         self.udp_sink.set_property("port", port)
