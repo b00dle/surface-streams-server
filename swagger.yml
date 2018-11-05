@@ -57,7 +57,7 @@ paths:
       tags:
         - clients
       summary: Create a client and add it to the clients list
-      description: Create a new client in the clients list
+      description: Create a new client in the clients list (-1 for int, and "" for string means parameter is unset)
       parameters:
         - name: client
           in: body
@@ -69,12 +69,19 @@ paths:
               name:
                 type: string
                 description: Name of client to create
-              in-ip:
-                type: string
-                description: IP for incoming client stream
+                default: "client"
               in-port:
                 type: integer
                 description: Port for incoming client stream
+                default: 5001
+              in-ip:
+                type: string
+                description: IP for incoming client stream
+                default: "0.0.0.0"
+              out-port:
+                type: integer
+                description: Port for outgoing merged stream (-1 means set dynamically)
+                default: -1
       responses:
         201:
           description: Successfully created client in list
@@ -137,7 +144,7 @@ paths:
       parameters:
         - name: uuid
           in: path
-          description: Last name of the client to update in the list
+          description: uuid of the client to update in the list (-1 for int, and "" for string means parameter is unset)
           type: string
           required: True
         - name: client
@@ -147,10 +154,16 @@ paths:
             properties:
               name:
                 type: string
+                default: ""
               in-ip:
                 type: string
+                default: ""
               in-port:
                 type: integer
+                default: -1
+              out-port:
+                type: integer
+                default: -1
       responses:
         200:
           description: Successfully updated client in clients list

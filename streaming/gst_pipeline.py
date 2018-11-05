@@ -33,6 +33,7 @@ class GstPipeline(object):
     def cleanup(self):
         print("##########cleaning up")
         self.bus.remove_signal_watch()
+        self.stop()
 
     def on_bus_message(self, bus, message):
         """ override in derived classes for message handling. """

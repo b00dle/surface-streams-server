@@ -23,18 +23,6 @@ def create_uuid():
 CLIENT_LIMIT = 3
 
 # Data to serve with our API
-'''
-<uuid-assigned-upon-creation> : {
-    "name": <arbitrary-name-provided-by-client>,
-    "uuid": <uuid-assigned-upon-creation>,
-    "in-ip": <incoming-stream-ip>,
-    "in-port": <incoming-stream-port>,
-    "out-ip": <outgoing-merged-stream-ip>,
-    "out-port": <outgoing-merged-stream-port>,
-    "timestamp": <timestamp-at-creation_time>
-}
-'''
-
 TEST_CLIENT = {
     "name": "Bilbo Baggins",
     "uuid": create_uuid(),
@@ -50,7 +38,7 @@ CLIENTS = {
 }
 
 
-def create_client(name, in_ip, in_port):
+def create_client(name, in_port, in_ip, out_port):
     """
     Helper function to create a client.
     :param name: name of the client
@@ -60,16 +48,17 @@ def create_client(name, in_ip, in_port):
     """
     global CLIENTS
     uuid = create_uuid()
+    in_port = in_port if in_port > 0 else 5000 + 2*len(CLIENTS) + 1
     client = {
         "name": name,
         "uuid": uuid,
-        "in-ip": in_ip,
+        "in-ip": in_ip if len(in_ip) > 0 else "0.0.0.0",
         "in-port": in_port,
         "out-ip": "0.0.0.0",
-        "out-port": 5000 + len(CLIENTS) + 1,
+        "out-port": out_port if out_port > 0 else in_port + 1,
         "timestamp": create_timestamp()
     }
-    streaming.create_loopback_thread(uuid, in_port)#, client["out-port"], client["out-ip"])
+    streaming.create_loopback_thread(uuid, in_port, client["out-port"], client["out-ip"])
     return uuid, client
 
 
@@ -109,9 +98,10 @@ def create(client):
     :param client:  client to create in clients structure
     :return:        201 on success, 406 on client exists
     """
-    name = client.get("name", None)
-    in_ip = client.get("in-ip", None)
-    in_port = client.get("in-port", None)
+    name = client.get("name", "")
+    in_ip = client.get("in-ip", "")
+    in_port = client.get("in-port", -1)
+    out_port = client.get("out-port", -1)
 
     if len(CLIENTS) >= CLIENT_LIMIT:
         abort(
@@ -119,7 +109,7 @@ def create(client):
             "Client list already at maximum capacity"
         )
     else:
-        uuid, client = create_client(name, in_ip, in_port)
+        uuid, client = create_client(name, in_port, in_ip, out_port)
         CLIENTS[uuid] = client
         return client
 
@@ -133,9 +123,14 @@ def update(uuid, client):
     """
     # Does the client exist in clients?
     if uuid in CLIENTS:
-        CLIENTS[uuid]["name"] = client.get("name")
-        CLIENTS[uuid]["in-ip"] = client.get("in-ip")
-        CLIENTS[uuid]["in-port"] = client.get("in-port")
+        n = client.get("name", "")
+        in_ip = client.get("in-ip", "")
+        in_port = client.get("in-port", -1)
+        out_port = client.get("out-port", -1)
+        CLIENTS[uuid]["name"] = n if len(n) > 0 else CLIENTS[uuid]["name"]
+        CLIENTS[uuid]["in-ip"] = in_ip if len(in_ip) > 0 else CLIENTS[uuid]["in-ip"]
+        CLIENTS[uuid]["in-port"] = in_port if in_port > 0 else CLIENTS[uuid]["in-port"]
+        CLIENTS[uuid]["out-port"] = out_port if out_port > 0 else CLIENTS[uuid]["out-port"]
         CLIENTS[uuid]["timestamp"] = create_timestamp()
         return CLIENTS[uuid]
 

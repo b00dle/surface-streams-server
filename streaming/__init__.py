@@ -17,7 +17,7 @@ def _run_thread():
     Gst.init(None)
     Gtk.main()
 
-def _ensure_thread_running():
+def _ensure_gtk_thread_running():
     global THREAD_RUNNING
     if not THREAD_RUNNING:
         gtk_main = threading.Thread(target=_run_thread)
@@ -25,8 +25,8 @@ def _ensure_thread_running():
         THREAD_RUNNING = True
 
 
-def create_loopback_thread(uuid, in_port, out_port=5002, in_address="0.0.0.0"):
-    _ensure_thread_running()
+def create_loopback_thread(uuid, in_port, out_port, in_address):
+    _ensure_gtk_thread_running()
     loopback = UdpVideoLoopback()
     loopback.set_in_port(in_port)
     loopback.set_out_port(out_port)
@@ -38,8 +38,8 @@ def create_loopback_thread(uuid, in_port, out_port=5002, in_address="0.0.0.0"):
 def remove_pipeline(uuid):
     if uuid in PIPELINES:
         PIPELINES[uuid].cleanup()
-        PIPELINES[uuid].stop()
         del PIPELINES[uuid]
+        print("###### removed pipeline\n  > pipelines", PIPELINES.keys())
         return True
     else:
         return False
