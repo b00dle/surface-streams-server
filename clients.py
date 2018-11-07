@@ -47,23 +47,31 @@ def create_client(name, in_port, in_ip, out_port):
     :return: Returns the uuid and dict values of the created client.
     """
     global CLIENTS
-    uuid = create_uuid()
+    new_uuid = create_uuid()
     in_port = in_port if in_port > 0 else 5000 + 2*len(CLIENTS) + 1
     client = {
         "name": name,
-        "uuid": uuid,
+        "uuid": new_uuid,
         "in-ip": in_ip if len(in_ip) > 0 else "0.0.0.0",
         "in-port": in_port,
         "out-ip": "0.0.0.0",
         "out-port": out_port if out_port > 0 else in_port + 1,
         "timestamp": create_timestamp()
     }
-    if len(CLIENTS) == 0:
-        streaming.create_loopback_pipeline(uuid, in_port, client["out-port"], client["in-ip"])
+    CLIENTS[new_uuid] = client
+    streaming.update_pipelines(CLIENTS)
+    '''
+    if len(CLIENTS) == 1:
+        #streaming.create_loopback_pipeline(new_uuid, in_port, client["out-port"], client["in-ip"])
+        streaming.create_multi_mixing_pipeline(CLIENTS, mode="all")
     else:
-        streaming.create_udp_mixing_pipeline(uuid, in_port, client["out-port"], client["in-ip"], CLIENTS)
+        streaming.create_multi_mixing_pipeline(CLIENTS)
+        #keys = [k for k in CLIENTS.keys()]
+        #streaming.create_loopback_pipeline(uuid, CLIENTS[keys[0]]["in-port"], client["out-port"], client["in-ip"])
+        #streaming.create_udp_mixing_pipeline(uuid, in_port, client["out-port"], client["in-ip"], CLIENTS)
     #streaming.create_mixing_pipeline(uuid, in_port, client["out-port"], client["in-ip"])
-    return uuid, client
+    '''
+    return new_uuid
 
 
 def read_all():
@@ -113,9 +121,8 @@ def create(client):
             "Client list already at maximum capacity"
         )
     else:
-        uuid, client = create_client(name, in_port, in_ip, out_port)
-        CLIENTS[uuid] = client
-        return client
+        uuid = create_client(name, in_port, in_ip, out_port)
+        return CLIENTS[uuid]
 
 
 def update(uuid, client):
@@ -156,7 +163,8 @@ def delete(uuid):
     if uuid in CLIENTS:
         name = CLIENTS[uuid]["name"]
         del CLIENTS[uuid]
-        if streaming.remove_pipeline(uuid):
+        #if streaming.update_pipelines(uuid):
+        if streaming.update_pipelines(CLIENTS):
             return make_response(
                 "{name} successfully deleted at uuid={uuid}".format(name=name, uuid=uuid), 200
             )

@@ -1,7 +1,7 @@
 import threading
 import gi
 from streaming.udp_video_loopback import UdpVideoLoopback
-from streaming.udp_video_mixer import UdpVideoMixer
+from streaming.udp_video_mixer import UdpVideoMixer, UdpMultiVideoMixer
 from streaming.video_mixer import VideoMixer
 gi.require_version("Gst", "1.0")
 gi.require_version("Gtk", "3.0")
@@ -47,7 +47,7 @@ def create_loopback_pipeline(uuid, in_port, out_port, in_address):
 
 def create_udp_mixing_pipeline(uuid, in_port, out_port, in_address, CLIENTS):
     _ensure_gtk_thread_running()
-    mixer = UdpVideoMixer(len(CLIENTS)+1)
+    mixer = UdpVideoMixer(len(CLIENTS))
     mixer.set_in_port(in_port, 0)
     i = 1
     for k in PIPELINES.keys():
@@ -80,6 +80,36 @@ def create_mixing_pipeline(uuid, in_port, out_port, in_address):
     mixer.start()
 
 
+def create_multi_mixing_pipeline(CLIENTS, mode="other"):
+    clear_pipelines()
+    _ensure_gtk_thread_running()
+    print("################# CREATING MULTI MIXING PIPELINE")
+    mixer = UdpMultiVideoMixer(len(CLIENTS), mode=mode)
+    i = 0
+    for uuid in CLIENTS.keys():
+        in_port = CLIENTS[uuid]["in-port"]
+        out_address = CLIENTS[uuid]["in-ip"]
+        out_port = CLIENTS[uuid]["out-port"]
+        mixer.set_in_port(in_port, i)
+        mixer.set_out_address(out_address, i)
+        mixer.set_out_port(out_port, i)
+        print("#### CLIENT "+ str(i))
+        print(" > in-port" + str(in_port))
+        print(" > out-address" + str(out_address))
+        print(" > out-port" + str(out_port))
+        i += 1
+    PIPELINES[uuid] = mixer
+    mixer.start()
+
+
+def update_pipelines(CLIENTS):
+    if len(CLIENTS) == 0:
+        clear_pipelines()
+    else:
+        create_multi_mixing_pipeline(CLIENTS, mode="other" if len(CLIENTS) > 1 else "all")
+    return True
+
+
 def remove_pipeline(uuid):
     if uuid in PIPELINES:
         PIPELINES[uuid].cleanup()
@@ -88,3 +118,9 @@ def remove_pipeline(uuid):
         return True
     else:
         return False
+
+
+def clear_pipelines():
+    uuid_list = [k for k in PIPELINES.keys()]
+    for uuid in uuid_list:
+        remove_pipeline(uuid)
