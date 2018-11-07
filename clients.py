@@ -58,7 +58,11 @@ def create_client(name, in_port, in_ip, out_port):
         "out-port": out_port if out_port > 0 else in_port + 1,
         "timestamp": create_timestamp()
     }
-    streaming.create_loopback_pipeline(uuid, in_port, client["out-port"], client["in-ip"])
+    if len(CLIENTS) == 0:
+        streaming.create_loopback_pipeline(uuid, in_port, client["out-port"], client["in-ip"])
+    else:
+        streaming.create_udp_mixing_pipeline(uuid, in_port, client["out-port"], client["in-ip"], CLIENTS)
+    #streaming.create_mixing_pipeline(uuid, in_port, client["out-port"], client["in-ip"])
     return uuid, client
 
 
