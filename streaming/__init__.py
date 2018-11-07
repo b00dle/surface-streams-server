@@ -1,5 +1,6 @@
 import threading
 import gi
+import os
 from streaming.udp_video_loopback import UdpVideoLoopback
 from streaming.udp_video_mixer import UdpVideoMixer, UdpMultiVideoMixer
 from streaming.video_mixer import VideoMixer
@@ -13,8 +14,13 @@ PIPELINES = {}
 
 THREAD_RUNNING = False
 
+DEBUG_GRAPH_DIR = os.getcwd()
+
+os.environ["GST_DEBUG_DUMP_DOT_DIR"] = DEBUG_GRAPH_DIR
+os.putenv('GST_DEBUG_DUMP_DIR_DIR', DEBUG_GRAPH_DIR)
 
 def _run_thread():
+    # Setting GST_DEBUG_DUMP_DOT_DIR environment variable enables us to have a dotfile generated
     GObject.threads_init()
     Gst.init(None)
     Gtk.main()

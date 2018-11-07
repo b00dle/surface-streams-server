@@ -4,10 +4,11 @@ gi.require_version("Gst", "1.0")
 gi.require_version("Gtk", "3.0")
 gi.require_version("GstVideo", "1.0")
 from gi.repository import Gst, Gtk, GObject
+import streaming
 
 
 class GstPipeline(object):
-    def __init__(self, name):
+    def __init__(self, name, debug=True):
         GObject.threads_init()
         Gst.init(None)
         self.pipeline = None
@@ -18,14 +19,31 @@ class GstPipeline(object):
         self.bus.enable_sync_message_emission()
         self.bus.connect("message", self.on_bus_message)
         self.bus.connect("sync-message::element", self.on_bus_sync_message)
+        self.debug = debug
+        self.name = name
 
     def __del__(self):
         print("##########deleting")
         if self.pipeline != None:
             self.pipeline.set_state(Gst.State.NULL)
 
+    def dump_graph(self):
+        dotfile = streaming.DEBUG_GRAPH_DIR+"/"+self.name+".dot"
+        if os.access(dotfile, os.F_OK):
+            os.remove(dotfile)
+        pdffile = streaming.DEBUG_GRAPH_DIR+"/"+self.name+".pdf"
+        Gst.debug_bin_to_dot_file(
+            self.pipeline,
+            Gst.DebugGraphDetails.ALL,
+            self.name
+        )
+        os.system("dot -Tpdf " + dotfile + " -o " + pdffile)
+
     def start(self):
         self.pipeline.set_state(Gst.State.PLAYING)
+        if self.debug:
+            print("### PIPELINE GRAPH dumped")
+            self.dump_graph()
 
     def stop(self):
         self.pipeline.set_state(Gst.State.NULL)
