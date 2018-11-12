@@ -1,5 +1,4 @@
 import connexion
-import signal
 from flask import render_template
 
 # Create the application instance

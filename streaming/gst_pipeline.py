@@ -11,14 +11,15 @@ class GstPipeline(object):
     def __init__(self, name, debug=True):
         GObject.threads_init()
         Gst.init(None)
+        self.registered_callbacks = {}
         self.pipeline = None
         self.bus = None
         self.pipeline = Gst.Pipeline.new(name)
         self.bus = self.pipeline.get_bus()
         self.bus.add_signal_watch()
         self.bus.enable_sync_message_emission()
-        self.bus.connect("message", self.on_bus_message)
-        self.bus.connect("sync-message::element", self.on_bus_sync_message)
+        self.register_callback(self.bus, "message", self.on_bus_message)
+        self.register_callback(self.bus, "sync-message::element", self.on_bus_sync_message)
         self.debug = debug
         self.name = name
 
@@ -50,6 +51,12 @@ class GstPipeline(object):
 
     def cleanup(self):
         print("##########cleaning up")
+        if len(self.registered_callbacks) > 0:
+            for gst_element, callbacks in self.registered_callbacks.items():
+                for c_id in callbacks:
+                    gst_element.disconnect(c_id)
+            self.registered_callbacks = {}
+        self.bus.disable_sync_message_emission()
         self.bus.remove_signal_watch()
         self.stop()
 
@@ -84,4 +91,8 @@ class GstPipeline(object):
         Connects callback function to signal referenced by signal_name
         of given GstElement.
         """
-        gst_element.connect(signal_name, function)
+        if gst_element not in self.registered_callbacks:
+            self.registered_callbacks[gst_element] = []
+        self.registered_callbacks[gst_element].append(
+            gst_element.connect(signal_name, function)
+        )
