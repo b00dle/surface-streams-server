@@ -107,3 +107,6 @@ venv.bak/
 # graph plotting
 *.dot
 *.pdf
+
+# logging
+*.txt

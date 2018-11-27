@@ -4,6 +4,7 @@ gi.require_version("GstVideo", "1.0")
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gst, GstVideo, GdkX11, Gtk
 from streaming.gst_pipeline import GstPipeline
+from streaming.stats_monitor import UdpStatsMonitor
 
 class UdpVideoMixer(GstPipeline):
     '''
@@ -146,11 +147,16 @@ class UdpMultiVideoMixer(GstPipeline):
         }
     ]
 
-    def __init__(self, num_clients, mode="other", width=640, height=480):
+    def __init__(self, num_clients, mode="other", width=480, height=320):
         if mode != "other" and mode != "all":
             raise ValueError("Unknown mode '"+mode+"'\n  > 'other' and 'all' are supported.")
 
         super().__init__("Udp-Multi-Video-Mixer")
+
+        self.monitors = [
+            UdpStatsMonitor("mixing-stats-"+str(i)+".txt")
+            for i in range(0, num_clients)
+        ]
 
         self.mixers = [
             self.make_add_element("videomixer", "mixer"+str(i))
@@ -230,6 +236,18 @@ class UdpMultiVideoMixer(GstPipeline):
                 "rtpgstpay": rtp_packer,
                 "udpsink": udp_sink
             })
+
+        for i in range(0, num_clients):
+            self.monitors[i].link(
+                self.pipeline,
+                self.sink_bins[i]["udpsink"].get_name()
+            )
+            self.monitors[i].start()
+
+    def cleanup(self):
+        for monitor in self.monitors:
+            monitor.unlink()
+        super().cleanup()
 
     def set_in_port(self, port, client_idx):
         self.src_bins[client_idx]["udpsrc"].set_property("port", port)
