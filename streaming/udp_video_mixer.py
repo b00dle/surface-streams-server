@@ -147,7 +147,7 @@ class UdpMultiVideoMixer(GstPipeline):
         }
     ]
 
-    def __init__(self, num_clients, mode="other", width=480, height=320):
+    def __init__(self, clients, mode="other", width=480, height=320):
         if mode != "other" and mode != "all":
             raise ValueError("Unknown mode '"+mode+"'\n  > 'other' and 'all' are supported.")
 
@@ -155,45 +155,28 @@ class UdpMultiVideoMixer(GstPipeline):
 
         self.monitors = [
             UdpStatsMonitor("mixing-stats-"+str(i)+".txt")
-            for i in range(0, num_clients)
+            for i in range(0, len(clients))
         ]
 
         self.mixers = [
             self.make_add_element("videomixer", "mixer"+str(i))
-            for i in range(0, num_clients)
+            for i in range(0, len(clients))
         ]
 
         self.tees = [
             self.make_add_element("tee", "tee"+str(i))
-            for i in range(0, num_clients)
+            for i in range(0, len(clients))
         ]
 
         # create and link udpsrc inputs to tee
         self.src_bins = []
-        for i in range(0, num_clients):
-            # create elements
-            udp_src = self.make_add_element("udpsrc", "udpsrc"+str(i))
-            udp_src.set_property("caps", Gst.caps_from_string("application/x-rtp, media=(string)application, clock-rate=(int)90000, encoding-name=(string)X-GST, caps=(string)aW1hZ2UvanBlZywgc29mLW1hcmtlcj0oaW50KTAsIHdpZHRoPShpbnQpMTI4MCwgaGVpZ2h0PShpbnQpNzIwLCBwaXhlbC1hc3BlY3QtcmF0aW89KGZyYWN0aW9uKTEvMSwgZnJhbWVyYXRlPShmcmFjdGlvbikyNDAwMC8xMDAx, capsversion=(string)0, payload=(int)96, ssrc=(uint)2277765570, timestamp-offset=(uint)3095164038, seqnum-offset=(uint)16152"))
-            src_queue = self.make_add_element("queue", "src_queue"+str(i))
-            rtp_depay = self.make_add_element("rtpgstdepay", "rtp_depay"+str(i))
-            jpeg_decoder = self.make_add_element("jpegdec", "jpeg_decoder"+str(i))
-            # link elements
-            self.link_elements(udp_src, src_queue)
-            self.link_elements(src_queue, rtp_depay)
-            self.link_elements(rtp_depay, jpeg_decoder)
-            self.link_elements(jpeg_decoder, self.tees[i])
-            # remember src bin
-            self.src_bins.append({
-                "udpsrc": udp_src,
-                "queue": src_queue,
-                "rtpgstdepay": rtp_depay,
-                "jpegdec": jpeg_decoder
-            })
+        for i in range(0, len(clients)):
+            self.src_bins.append(self._create_src_bin(clients[i], i))
 
         # create and link tee inputs to mixer
         self.mixer_bins = []
-        for i in range(0, num_clients):
-            for tee_idx in range(0, num_clients):
+        for i in range(0, len(clients)):
+            for tee_idx in range(0, len(clients)):
                 if mode == "other" and tee_idx == i:
                     continue
                 name_post_fix = str(i) + "-t" + str(tee_idx)
@@ -216,12 +199,46 @@ class UdpMultiVideoMixer(GstPipeline):
 
         # create and link mixer outputs to udpsink
         self.sink_bins = []
-        for i in range(0, num_clients):
-            queue_out = self.make_add_element("queue", "queue_out"+str(i))
-            videoconvert = self.make_add_element("videoconvert", "mixer_convert"+str(i))
-            jpeg_encoder = self.make_add_element("jpegenc", "jpeg_encoder"+str(i))
-            rtp_packer = self.make_add_element("rtpgstpay", "rtp_packer"+str(i))
-            udp_sink = self.make_add_element("udpsink", "udp_sink"+str(i))
+        for i in range(0, len(clients)):
+            self.sink_bins.append(self._create_sink_bin(clients[i], i))
+
+        for i in range(0, len(clients)):
+            self.monitors[i].link(
+                self.pipeline,
+                self.sink_bins[i]["udpsink"].get_name()
+            )
+            self.monitors[i].start()
+
+    def _create_src_bin(self, client, i):
+        if client["streaming-protocol"] == "jpeg":
+            # create elements
+            udp_src = self.make_add_element("udpsrc", "udpsrc" + str(i))
+            udp_src.set_property("caps", Gst.caps_from_string(
+                "application/x-rtp, media=(string)application, clock-rate=(int)90000, encoding-name=(string)X-GST, caps=(string)aW1hZ2UvanBlZywgc29mLW1hcmtlcj0oaW50KTAsIHdpZHRoPShpbnQpMTI4MCwgaGVpZ2h0PShpbnQpNzIwLCBwaXhlbC1hc3BlY3QtcmF0aW89KGZyYWN0aW9uKTEvMSwgZnJhbWVyYXRlPShmcmFjdGlvbikyNDAwMC8xMDAx, capsversion=(string)0, payload=(int)96, ssrc=(uint)2277765570, timestamp-offset=(uint)3095164038, seqnum-offset=(uint)16152"))
+            src_queue = self.make_add_element("queue", "src_queue" + str(i))
+            rtp_depay = self.make_add_element("rtpgstdepay", "rtp_depay" + str(i))
+            jpeg_decoder = self.make_add_element("jpegdec", "jpeg_decoder" + str(i))
+            # link elements
+            self.link_elements(udp_src, src_queue)
+            self.link_elements(src_queue, rtp_depay)
+            self.link_elements(rtp_depay, jpeg_decoder)
+            self.link_elements(jpeg_decoder, self.tees[i])
+            # remember src bin
+            return {
+                "udpsrc": udp_src,
+                "queue": src_queue,
+                "rtpgstdepay": rtp_depay,
+                "jpegdec": jpeg_decoder
+            }
+        return None
+
+    def _create_sink_bin(self, client, i):
+        if client["streaming-protocol"] == "jpeg":
+            queue_out = self.make_add_element("queue", "queue_out" + str(i))
+            videoconvert = self.make_add_element("videoconvert", "mixer_convert" + str(i))
+            jpeg_encoder = self.make_add_element("jpegenc", "jpeg_encoder" + str(i))
+            rtp_packer = self.make_add_element("rtpgstpay", "rtp_packer" + str(i))
+            udp_sink = self.make_add_element("udpsink", "udp_sink" + str(i))
             # link mixer pipeline
             self.link_elements(self.mixers[i], queue_out)
             self.link_elements(queue_out, videoconvert)
@@ -229,20 +246,14 @@ class UdpMultiVideoMixer(GstPipeline):
             self.link_elements(jpeg_encoder, rtp_packer)
             self.link_elements(rtp_packer, udp_sink)
             # remember sink bin
-            self.sink_bins.append({
+            return {
                 "queue": queue_out,
                 "videoconvert": videoconvert,
                 "jpegenc": jpeg_encoder,
                 "rtpgstpay": rtp_packer,
                 "udpsink": udp_sink
-            })
-
-        for i in range(0, num_clients):
-            self.monitors[i].link(
-                self.pipeline,
-                self.sink_bins[i]["udpsink"].get_name()
-            )
-            self.monitors[i].start()
+            }
+        return None
 
     def cleanup(self):
         for monitor in self.monitors:

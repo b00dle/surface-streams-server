@@ -90,7 +90,7 @@ def create_multi_mixing_pipeline(CLIENTS, mode="other"):
     clear_pipelines()
     _ensure_gtk_thread_running()
     print("################# CREATING MULTI MIXING PIPELINE")
-    mixer = UdpMultiVideoMixer(len(CLIENTS), mode=mode)
+    mixer = UdpMultiVideoMixer([CLIENTS[k] for k in CLIENTS.keys()], mode=mode)
     i = 0
     for uuid in CLIENTS.keys():
         in_port = CLIENTS[uuid]["in-port"]
