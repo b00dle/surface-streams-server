@@ -30,6 +30,7 @@ TEST_CLIENT = {
     "in-port": 5001,
     "out-ip": "0.0.0.0",
     "out-port": 5002,
+    "streaming-protocol": "jpeg",
     "timestamp": create_timestamp()
 }
 
@@ -38,7 +39,7 @@ CLIENTS = {
 }
 
 
-def create_client(name, in_port, in_ip, out_port):
+def create_client(name, in_port, in_ip, out_port, streaming_protocol):
     """
     Helper function to create a client.
     :param name: name of the client
@@ -56,6 +57,7 @@ def create_client(name, in_port, in_ip, out_port):
         "in-port": in_port,
         "out-ip": "0.0.0.0",
         "out-port": out_port if out_port > 0 else in_port + 1,
+        "streaming-protocol": streaming_protocol,
         "timestamp": create_timestamp()
     }
     CLIENTS[new_uuid] = client
@@ -114,6 +116,7 @@ def create(client):
     in_ip = client.get("in-ip", "")
     in_port = client.get("in-port", -1)
     out_port = client.get("out-port", -1)
+    streaming_protocol = client.get("streaming-protocol", "jpeg")
 
     if len(CLIENTS) >= CLIENT_LIMIT:
         abort(
@@ -121,7 +124,7 @@ def create(client):
             "Client list already at maximum capacity"
         )
     else:
-        uuid = create_client(name, in_port, in_ip, out_port)
+        uuid = create_client(name, in_port, in_ip, out_port, streaming_protocol)
         return CLIENTS[uuid]
 
 

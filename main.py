@@ -21,10 +21,12 @@ def home():
 # If we're running in stand alone mode, run the application
 if __name__ == '__main__':
     #app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
-    #app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000)
+    '''
     from plotting import stats_plotter
     stats_plotter.plot_monitor_stats([
         "480-320-mixing-stats-0.txt",
         "640-480-mixing-stats-0.txt",
         "1280-960-mixing-stats-0.txt"
     ])
+    '''
