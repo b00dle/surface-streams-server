@@ -62,17 +62,6 @@ def create_client(name, in_port, in_ip, out_port, streaming_protocol):
     }
     CLIENTS[new_uuid] = client
     streaming.update_pipelines(CLIENTS)
-    '''
-    if len(CLIENTS) == 1:
-        #streaming.create_loopback_pipeline(new_uuid, in_port, client["out-port"], client["in-ip"])
-        streaming.create_multi_mixing_pipeline(CLIENTS, mode="all")
-    else:
-        streaming.create_multi_mixing_pipeline(CLIENTS)
-        #keys = [k for k in CLIENTS.keys()]
-        #streaming.create_loopback_pipeline(uuid, CLIENTS[keys[0]]["in-port"], client["out-port"], client["in-ip"])
-        #streaming.create_udp_mixing_pipeline(uuid, in_port, client["out-port"], client["in-ip"], CLIENTS)
-    #streaming.create_mixing_pipeline(uuid, in_port, client["out-port"], client["in-ip"])
-    '''
     return new_uuid
 
 
@@ -166,7 +155,6 @@ def delete(uuid):
     if uuid in CLIENTS:
         name = CLIENTS[uuid]["name"]
         del CLIENTS[uuid]
-        #if streaming.update_pipelines(uuid):
         if streaming.update_pipelines(CLIENTS):
             return make_response(
                 "{name} successfully deleted at uuid={uuid}".format(name=name, uuid=uuid), 200

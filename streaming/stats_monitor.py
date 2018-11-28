@@ -2,7 +2,16 @@ from gi.repository import GObject
 
 
 class UdpStatsMonitor(object):
+    """
+    Class monitoring bytes sent of a udpsink element this instance links to.
+    Produces console logs for monitored data. Can also store data to csv file.
+    """
+
     def __init__(self, file=""):
+        """
+        Constructor.
+        :param file: optional .txt file path to store monitored data to in csv format.
+        """
         self.stats = {}
         self._enabled = False
         self._pipeline = None
@@ -10,16 +19,30 @@ class UdpStatsMonitor(object):
         self.file = file
 
     def link(self, pipeline, element_name):
+        """
+        Links instance to a udpsink in a GstPipeline
+        :param pipeline: GstPipeline containing udpsink element to monitor
+        :param element_name: name of udpsink element to monitor.
+        :return:
+        """
         self.stop()
         self._pipeline = pipeline
         self._element_name = element_name
 
     def unlink(self):
+        """
+        Cuts the link between this instance and the udpsink it is monitoring.
+        :return:
+        """
         self.stop()
         self._pipeline = None
         self._element_name = None
 
     def start(self):
+        """
+        Starts the monitoring process.
+        :return:
+        """
         if self._enabled:
             return
         self.stats = self.pull_stats_from_element()
@@ -31,11 +54,19 @@ class UdpStatsMonitor(object):
         GObject.timeout_add_seconds(1, self._update)
 
     def stop(self):
+        """
+        Stops the monitoring process.
+        :return:
+        """
         if not self._enabled:
             return
         self._enabled = False
 
     def _update(self):
+        """
+        Updates stats read from udpsink element linked to this instance.
+        :return:
+        """
         new_stats = self.pull_stats_from_element()
         if new_stats is None or not self._enabled:
             return
@@ -53,6 +84,10 @@ class UdpStatsMonitor(object):
             GObject.timeout_add_seconds(1, self._update)
 
     def pull_stats_from_element(self):
+        """
+        Getter for currently linked udpsink GstElement stats
+        :return: current stats as dict
+        """
         if self._pipeline is None or self._element_name is None:
             self._enabled = False
             return None

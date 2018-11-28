@@ -8,7 +8,17 @@ import streaming
 
 
 class GstPipeline(object):
+    """
+    Base class for GStreamer pipeline implementations.
+    """
+
     def __init__(self, name, debug=True):
+        """
+        Constructor.
+        :param name: name of the pipeline
+        :param debug: bool denoting whether debugging features should be enabled.
+        If true pipeline will be plotted to dot file and pdf.
+        """
         GObject.threads_init()
         Gst.init(None)
         self.registered_callbacks = {}
@@ -29,6 +39,10 @@ class GstPipeline(object):
             self.pipeline.set_state(Gst.State.NULL)
 
     def dump_graph(self):
+        """
+        Produces .dot and .pdf file of pipeline graph.
+        :return:
+        """
         dotfile = streaming.DEBUG_GRAPH_DIR+"/"+self.name+".dot"
         if os.access(dotfile, os.F_OK):
             os.remove(dotfile)
@@ -41,15 +55,29 @@ class GstPipeline(object):
         os.system("dot -Tpdf " + dotfile + " -o " + pdffile)
 
     def start(self):
+        """
+        Changes state of GStreamer pipeline to PLAYING.
+        Dumps graph (see dump_graph) if debug is enabled.
+        :return:
+        """
         self.pipeline.set_state(Gst.State.PLAYING)
         if self.debug:
             print("### PIPELINE GRAPH dumped")
             self.dump_graph()
 
     def stop(self):
+        """
+        Changes state of GStreamer pipeline to NULL.
+        :return:
+        """
         self.pipeline.set_state(Gst.State.NULL)
 
     def cleanup(self):
+        """
+        Unregisters all message callbacks and cleans up refs.
+        Should be called prior to calling __del__ on instance.
+        :return:
+        """
         print("##########cleaning up")
         if len(self.registered_callbacks) > 0:
             for gst_element, callbacks in self.registered_callbacks.items():
@@ -61,11 +89,19 @@ class GstPipeline(object):
         self.stop()
 
     def on_bus_message(self, bus, message):
-        """ override in derived classes for message handling. """
+        """
+        Bus massage callback.
+        Override in derived classes for message handling.
+        :return:
+        """
         pass
 
     def on_bus_sync_message(self, bus, message):
-        """ override in derived classes for sync message handling. """
+        """
+        Bus sync-massage callback.
+        Override in derived classes for message handling.
+        :return:
+        """
         pass
 
     def make_add_element(self, gst_element_name, name):
@@ -73,13 +109,21 @@ class GstPipeline(object):
         Creates a GstElement with given gst_element_name
         and given name. The element is added to the pipeline
         and then returned.
+        :param gst_element_name: name of element to add
+        :param name: unqiue name for element instance
+        :return: GStreamer element added
         """
         gst_element = Gst.ElementFactory.make(gst_element_name, name)
         self.pipeline.add(gst_element)
         return gst_element
 
     def link_elements(self, src, sink):
-        """ Links src-pad of src GstElement to sink-pad of sink GstElement. """
+        """
+        Links src-pad of src GstElement to sink-pad of sink GstElement.
+        :param src: src pad of GstElement producing data
+        :param sink: sink pad of GstElement receiving data
+        :return:
+        """
         if not src.link(sink):
             print("## link_elements")
             print(" > could not link")
@@ -90,6 +134,10 @@ class GstPipeline(object):
         """
         Connects callback function to signal referenced by signal_name
         of given GstElement.
+        :param gst_element: GstElement producing signal
+        :param signal_name: name of GstElement signal
+        :param function: callback function to connect signal to
+        :return:
         """
         if gst_element not in self.registered_callbacks:
             self.registered_callbacks[gst_element] = []

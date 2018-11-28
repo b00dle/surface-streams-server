@@ -18,15 +18,21 @@ def home():
     return render_template('home.html')
 
 
-# If we're running in stand alone mode, run the application
-if __name__ == '__main__':
-    #app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+def server_main():
+    # app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
     app.run(host='0.0.0.0', port=5000)
-    '''
+
+
+def plotting_main():
     from plotting import stats_plotter
     stats_plotter.plot_monitor_stats([
         "480-320-mixing-stats-0.txt",
         "640-480-mixing-stats-0.txt",
         "1280-960-mixing-stats-0.txt"
     ])
-    '''
+
+
+# If we're running in stand alone mode, run the application
+if __name__ == '__main__':
+    server_main()
+    #plotting_main()
