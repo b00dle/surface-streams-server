@@ -12,6 +12,43 @@ basePath: /api
 
 # Paths supported by the server application
 paths:
+  /server-config:
+    get:
+      operationId: server_config.read_all
+      tags:
+        - server-config
+      summary: Read the current SurfaceStreams server config
+      description: Read the current SurfaceStreams server config
+      responses:
+        200:
+          description: Successfully read server config
+          schema:
+            properties:
+              merged-stream-width:
+                type: integer
+              merged-stream-height:
+                type: integer
+
+    put:
+      operationId: server_config.update
+      tags:
+      - server-config
+      summary: Update the current SurfaceStreams server config
+      description: Update the current SurfaceStreams server config
+      parameters:
+      - name: config
+        in: body
+        schema:
+          type: object
+          properties:
+            merged-stream-width:
+              type: integer
+            merged-stream-height:
+              type: integer
+      responses:
+        200:
+          description: Successfully updated SurfaceStreams server config
+
   /clients:
     get:
       operationId: clients.read_all

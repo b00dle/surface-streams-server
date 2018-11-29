@@ -26,9 +26,9 @@ def server_main():
 def plotting_main():
     from plotting import stats_plotter
     stats_plotter.plot_monitor_stats([
-        "480-320-mixing-stats-0.txt",
-        "640-480-mixing-stats-0.txt",
-        "1280-960-mixing-stats-0.txt"
+        "measurements/mp4-480-320.txt",
+        "measurements/mp4-640-480.txt",
+        "measurements/mp4-1280-960.txt"
     ])
 
 

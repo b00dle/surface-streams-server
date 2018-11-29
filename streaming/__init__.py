@@ -14,6 +14,10 @@ THREAD_RUNNING = False
 
 DEBUG_GRAPH_DIR = os.getcwd()
 
+MERGED_STREAM_WIDTH = 640
+
+MERGED_STREAM_HEIGHT = 480
+
 os.environ["GST_DEBUG_DUMP_DOT_DIR"] = DEBUG_GRAPH_DIR
 os.putenv('GST_DEBUG_DUMP_DIR_DIR', DEBUG_GRAPH_DIR)
 
@@ -53,7 +57,12 @@ def create_multi_mixing_pipeline(CLIENTS, mode="other"):
     clear_pipelines()
     _ensure_gtk_thread_running()
     print("################# CREATING MULTI MIXING PIPELINE")
-    mixer = UdpVideoMixer([CLIENTS[k] for k in CLIENTS.keys()], mode=mode)
+    mixer = UdpVideoMixer(
+        [CLIENTS[k] for k in CLIENTS.keys()],
+        mode=mode,
+        width=MERGED_STREAM_WIDTH,
+        height=MERGED_STREAM_HEIGHT
+    )
     i = 0
     for uuid in CLIENTS.keys():
         in_port = CLIENTS[uuid]["in-port"]
