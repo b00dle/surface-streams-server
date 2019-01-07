@@ -27,6 +27,16 @@ VP8_CAPS = "application/x-rtp, " \
            "clock-base=(uint)275641083, " \
            "seqnum-base=(uint)34810"
 
+VP9_CAPS = "application/x-rtp, " \
+           "media=video, " \
+           "clock-rate=90000, " \
+           "encoding-name=VP9, " \
+           "payload=96, " \
+           "ssrc=2628574034, " \
+           "timestamp-offset=3124680929, " \
+           "seqnum-offset=7023, " \
+           "a-framerate=23.976023976023978"
+
 MP4_CAPS = "application/x-rtp, " \
            "media=(string)video, " \
            "clock-rate=(int)90000, " \

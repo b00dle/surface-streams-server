@@ -114,45 +114,55 @@ class UdpVideoMixer(GstPipeline):
         udp_src = self.make_add_element("udpsrc", "udpsrc" + str(i))
         src_queue = self.make_add_element("queue", "src_queue" + str(i))
         rtp_depay = None
+        extra_parse = None
         decoder = None
         if client["streaming-protocol"] == "jpeg":
             # create elements
             udp_src.set_property("caps", Gst.caps_from_string(streaming.JPEG_CAPS))
-            #    "application/x-rtp, media=(string)application, clock-rate=(int)90000, encoding-name=(string)X-GST, caps=(string)aW1hZ2UvanBlZywgc29mLW1hcmtlcj0oaW50KTAsIHdpZHRoPShpbnQpMTI4MCwgaGVpZ2h0PShpbnQpNzIwLCBwaXhlbC1hc3BlY3QtcmF0aW89KGZyYWN0aW9uKTEvMSwgZnJhbWVyYXRlPShmcmFjdGlvbikyNDAwMC8xMDAx, capsversion=(string)0, payload=(int)96, ssrc=(uint)2277765570, timestamp-offset=(uint)3095164038, seqnum-offset=(uint)16152"))
             rtp_depay = self.make_add_element("rtpgstdepay", "rtp_depay" + str(i))
             decoder = self.make_add_element("jpegdec", "jpeg_decoder" + str(i))
         elif client["streaming-protocol"] == "vp8":
             # create elements
             udp_src.set_property("caps", Gst.caps_from_string(streaming.VP8_CAPS))
-            #    "application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)VP8-DRAFT-IETF-01, payload=(int)96, ssrc=(uint)2990747501, clock-base=(uint)275641083, seqnum-base=(uint)34810"))
             rtp_depay = self.make_add_element("rtpvp8depay", "rtp_depay" + str(i))
             decoder = self.make_add_element("vp8dec", "vp8_decoder" + str(i))
+        elif client["streaming-protocol"] == "vp9":
+            # create elements
+            udp_src.set_property("caps", Gst.caps_from_string(streaming.VP9_CAPS))
+            rtp_depay = self.make_add_element("rtpvp9depay", "rtp_depay" + str(i))
+            decoder = self.make_add_element("vp9dec", "vp9_decoder" + str(i))
         elif client["streaming-protocol"] == "mp4":
             # create elements
             udp_src.set_property("caps", Gst.caps_from_string(streaming.MP4_CAPS))
-            #    "application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)MP4V-ES, profile-level-id=(string)1, config=(string)000001b001000001b58913000001000000012000c48d8800cd3204709443000001b24c61766335362e312e30, payload=(int)96, ssrc=(uint)2873740600, timestamp-offset=(uint)391825150, seqnum-offset=(uint)2980"))
             rtp_depay = self.make_add_element("rtpmp4vdepay", "rtp_depay" + str(i))
             decoder = self.make_add_element("avdec_mpeg4", "mp4_decoder" + str(i))
         elif client["streaming-protocol"] == "h264":
             # create elements
             udp_src.set_property("caps", Gst.caps_from_string(streaming.H264_CAPS))
-            #    "application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, packetization-mode=1, profile-level-id=f40032, payload=96, ssrc=1577364544, timestamp-offset=1721384841, seqnum-offset=7366, a-framerate=25"))
             rtp_depay = self.make_add_element("rtph264depay", "rtp_depay" + str(i))
             decoder = self.make_add_element("avdec_h264", "h264_decoder" + str(i))
         elif client["streaming-protocol"] == "h265":
             udp_src.set_property("caps", Gst.caps_from_string(streaming.H265_CAPS))
-            rtp_depay = self.make_add_element("rtph265depay", "h265_depay")
-            decoder = self.make_add_element("avdec_h264", "h265_decoder")
+            rtp_depay = self.make_add_element("rtph265depay", "h265_depay" + str(i))
+            extra_parse = self.make_add_element("h265parse", "extra_parse" + str(i))
+            #extra_parse.set_property("disable-passthrough", True)
+            #extra_parse.set_property("config-interval", 1)
+            decoder = self.make_add_element("avdec_h265", "h265_decoder" + str(i))
         # link elements
         self.link_elements(udp_src, src_queue)
         self.link_elements(src_queue, rtp_depay)
-        self.link_elements(rtp_depay, decoder)
+        if extra_parse is not None:
+            self.link_elements(rtp_depay, extra_parse)
+            self.link_elements(extra_parse, decoder)
+        else:
+            self.link_elements(rtp_depay, decoder)
         self.link_elements(decoder, self.tees[i])
         # remember src bin
         return {
             "udpsrc": udp_src,
             "queue": src_queue,
             "rtp_depay": rtp_depay,
+            "extra_parse": extra_parse,
             "decoder": decoder
         }
 
@@ -172,7 +182,11 @@ class UdpVideoMixer(GstPipeline):
             rtp_packer = self.make_add_element("rtpgstpay", "rtp_packer" + str(i))
         elif client["streaming-protocol"] == "vp8":
             encoder = self.make_add_element("vp8enc", "vp8_encoder" + str(i))
+            #encoder.set_property("target-bitrate", 4096*1000)
             rtp_packer = self.make_add_element("rtpvp8pay", "rtp_packer" + str(i))
+        elif client["streaming-protocol"] == "vp9":
+            encoder = self.make_add_element("vp9enc", "vp9_encoder" + str(i))
+            rtp_packer = self.make_add_element("rtpvp9pay", "rtp_packer" + str(i))
         elif client["streaming-protocol"] == "mp4":
             encoder = self.make_add_element("avenc_mpeg4", "mp4_encoder" + str(i))
             rtp_packer = self.make_add_element("rtpmp4vpay", "rtp_packer" + str(i))
@@ -180,10 +194,14 @@ class UdpVideoMixer(GstPipeline):
         elif client["streaming-protocol"] == "h264":
             encoder = self.make_add_element("x264enc", "h264_encoder" + str(i))
             encoder.set_property("tune", "zerolatency")
+            encoder.set_property("speed-preset", 4) # 1 fast but low encoding to 2 slow but high encoding
+            encoder.set_property("pass", 5)
+            encoder.set_property("quantizer", 22)
             rtp_packer = self.make_add_element("rtph264pay", "rtp_packer" + str(i))
         elif client["streaming-protocol"] == "h265":
             encoder = self.make_add_element("x265enc", "h265_encoder" + str(i))
             encoder.set_property("tune", "zerolatency")
+            encoder.set_property("log-level", "full")
             rtp_packer = self.make_add_element("rtph265pay", "rtp_packer" + str(i))
         udp_sink = self.make_add_element("udpsink", "udp_sink" + str(i))
         # link mixer pipeline

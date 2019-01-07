@@ -229,3 +229,120 @@ paths:
       responses:
         200:
           description: Successfully deleted a client from clients list
+
+  /images:
+    get:
+      operationId: images.read_all
+      tags:
+        - images
+      summary: Read the entire list of images
+      description: Read the list of images
+      parameters:
+        - name: length
+          in: query
+          type: integer
+          description: Number of images to get from images
+          required: false
+        - name: offset
+          in: query
+          type: integer
+          description: Offset from beginning of list where to start gathering images
+          required: false
+      responses:
+        200:
+          description: Successfully read images list operation
+          schema:
+            type: array
+            items:
+              properties:
+                name:
+                  type: string
+                uuid:
+                  type: string
+                timestamp:
+                  type: string
+
+    post:
+      operationId: images.create
+      tags:
+        - images
+      summary: Create a image and add it to the images list
+      description: Create a new image in the images list (-1 for int, and "" for string means parameter is unset)
+      parameters:
+        - name: image
+          in: body
+          description: Image to create
+          required: True
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of image to create
+                default: "image"
+      responses:
+        201:
+          description: Successfully created image in list
+          schema:
+            properties:
+              name:
+                type: string
+              uuid:
+                type: string
+              timestamp:
+                type: string
+              data:
+                type: string
+
+  /images/{uuid}:
+    get:
+      operationId: images.read
+      tags:
+        - images
+      summary: Read the entire list of images
+      description: Read the list of images
+      parameters:
+        - name: uuid
+          in: path
+          type: string
+          required: True
+      responses:
+        200:
+          description: Successfully read images list operation
+          schema:
+            type: file
+
+    put:
+      operationId: images.fill
+      tags:
+        - images
+      summary: Fill a image and add it to the images list
+      description: Fill an image in the images list
+      parameters:
+        - name: uuid
+          in: path
+          type: string
+          required: True
+        - name: data
+          in: formData
+          description: data to fill
+          required: True
+          type: file
+      responses:
+        200:
+          description: Successfully created image in list
+
+    delete:
+      operationId: images.delete
+      tags:
+        - images
+      summary: Delete an image from the images list
+      description: Delete an image
+      parameters:
+        - name: uuid
+          in: path
+          type: string
+          required: True
+      responses:
+        200:
+          description: Successfully deleted an image from images list

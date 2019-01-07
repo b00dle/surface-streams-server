@@ -1,5 +1,6 @@
 import connexion
 from flask import render_template
+import images
 
 # Create the application instance
 app = connexion.App(__name__, specification_dir='./')
@@ -16,6 +17,10 @@ def home():
     :return:        the rendered template 'home.html'
     """
     return render_template('home.html')
+
+
+def server_cleanup():
+    images.remove_all()
 
 
 def server_main():
@@ -35,4 +40,5 @@ def plotting_main():
 # If we're running in stand alone mode, run the application
 if __name__ == '__main__':
     server_main()
+    server_cleanup()
     #plotting_main()

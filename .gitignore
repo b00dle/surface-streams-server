@@ -110,3 +110,6 @@ venv.bak/
 
 # logging
 *.txt
+
+# server data
+SERVER_DATA/
