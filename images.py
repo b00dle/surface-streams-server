@@ -130,7 +130,7 @@ def read(uuid):
             404,
             "Image with uuid {uuid} not found".format(uuid=uuid)
         )
-    return send_file(IMAGE_DATA[uuid]["filename"], mimetype=IMAGE_DATA[uuid]["mimetype"])
+    return send_file(IMAGE_DATA[uuid]["filename"])
 
 
 def delete(uuid):
