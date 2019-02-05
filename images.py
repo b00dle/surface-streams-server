@@ -10,6 +10,8 @@ import os
 
 # 3rd party modules
 from flask import make_response, abort, send_file
+from database.api import ImageApi
+from database.base import engine
 
 
 def create_timestamp():
@@ -20,35 +22,30 @@ def create_uuid():
     return str(uuid.uuid4())
 
 
-# Data to serve with our API
-TEST_IMAGE = {
-    "name": "EMPTY IMAGE",
-    "uuid": create_uuid(),
-    "timestamp": create_timestamp()
-}
-
-
-IMAGES = {
-    #TEST_IMAGE["uuid"]: TEST_IMAGE
-}
-
-IMAGE_DATA = {}
+def response_image_dict(img_dict):
+    return {
+        "created_datetime": img_dict["created_datetime"],
+        "name": img_dict["name"],
+        "uuid": img_dict["uuid"]
+    }
 
 
 def create_image(name):
     """
     Helper function to prepare image upload.
     :param name: name of the image
-    :return: Returns the uuid and dict values of the created image.
+    :return: Returns dict values of the created image.
     """
     new_uuid = create_uuid()
-    image = {
-        "name": name,
-        "uuid": new_uuid,
-        "timestamp": create_timestamp()
-    }
-    IMAGES[new_uuid] = image
-    return new_uuid
+
+    i_api = ImageApi(bind=engine)
+    i_api.open()
+    img = i_api.add_image_file(uuid=new_uuid, name=name)
+    i_api.commit()
+    img_dict = img.as_dict()
+    i_api.close()
+
+    return img_dict
 
 
 def remove_image(uuid):
@@ -57,25 +54,39 @@ def remove_image(uuid):
     :param uuid: identifier for the image to be removed
     :return: success of removal
     """
-    if uuid in IMAGES:
-        del IMAGES[uuid]
-        if uuid in IMAGE_DATA:
-            fname = IMAGE_DATA[uuid]["filename"]
-            del IMAGE_DATA[uuid]
-            if os.path.exists(fname):
-                os.remove(fname)
+    i_api = ImageApi(bind=engine)
+    i_api.open()
+    img = i_api.get_image_file(uuid)
+    if img is not None:
+        if img.filename is not None:
+            if os.path.exists(img.filename):
+                os.remove(img.filename)
+        i_api.delete(img)
+        i_api.commit()
         return True
-    else:
-        return False
+    i_api.close()
+    return False
 
 
 def remove_all():
     """
     helper function to delete all images of current session
     """
-    ids = [i for i in IMAGES.keys()]
-    for id in ids:
-        remove_image(id)
+    i_api = ImageApi(bind=engine)
+    i_api.open()
+
+    images = i_api.get_image_files()
+    if len(images) == 0:
+        i_api.close()
+        return
+
+    for img in images:
+        if img.filename is not None:
+            if os.path.exists(img.filename):
+                os.remove(img.filename)
+        i_api.delete(img)
+    i_api.commit()
+    i_api.close()
 
 
 def read_all():
@@ -84,8 +95,16 @@ def read_all():
     with the complete lists of images
     :return:        json string of list of images
     """
+    i_api = ImageApi(bind=engine)
+    i_api.open()
+    res = [
+        response_image_dict(img.as_dict())
+        for img in i_api.get_image_files()
+    ]
+    i_api.close()
+
     # Create the list of images from our data
-    return [IMAGES[key] for key in sorted(IMAGES.keys())]
+    return res
 
 
 def create(image):
@@ -96,8 +115,7 @@ def create(image):
     :return:        201 on success, 406 on TODO
     """
     name = image.get("name", "")
-    uuid = create_image(name)
-    return IMAGES[uuid]
+    return response_image_dict(create_image(name))
 
 
 def fill(uuid, data):
@@ -107,30 +125,41 @@ def fill(uuid, data):
     :param uuid: identifier for the image
     :return: 201 on success, 404 on image not found
     """
-    if uuid not in IMAGES:
+    i_api = ImageApi(bind=engine)
+    i_api.open()
+    img = i_api.get_image_file(uuid)
+    name = ""
+    if img is not None:
+        img.mimetype = data.mimetype
+        img.filename = "SERVER_DATA/"+str(uuid)+data.filename
+        data.save(img.filename)
+        name = img.name
+        i_api.commit()
+    else:
+        i_api.close()
         abort(
             404,
             "Image with uuid {uuid} not found".format(uuid=uuid)
         )
 
-    IMAGE_DATA[uuid] = {
-        "filename": "SERVER_DATA/"+str(uuid)+data.filename,
-        "mimetype": data.mimetype
-    }
-    data.save(IMAGE_DATA[uuid]["filename"])
-
     return make_response(
-        "{name} successfully filled at uuid={uuid}".format(name=IMAGES[uuid]["name"], uuid=uuid), 200
+        "{name} successfully filled at uuid={uuid}".format(name=name, uuid=uuid), 200
     )
 
 
 def read(uuid):
-    if uuid not in IMAGES or uuid not in IMAGE_DATA:
+    i_api = ImageApi(bind=engine)
+    i_api.open()
+    img = i_api.get_image_file(uuid)
+    if img is None or img.filename is None:
+        i_api.close()
         abort(
             404,
             "Image with uuid {uuid} not found".format(uuid=uuid)
         )
-    return send_file(IMAGE_DATA[uuid]["filename"])
+    filename = img.filename
+    i_api.close()
+    return send_file(filename)
 
 
 def delete(uuid):
@@ -139,15 +168,12 @@ def delete(uuid):
     :param uuid:   uuid of image to delete
     :return:        200 on successful delete, 404 if not found
     """
-    # Does the image to delete exist?
-    if uuid in IMAGES:
-        name = IMAGES[uuid]["name"]
-        if remove_image(uuid):
-            return make_response(
-                "{name} successfully deleted at uuid={uuid}".format(name=name, uuid=uuid), 200
-            )
-    # Otherwise, nope, image to delete not found
-    abort(
-        404,
-        "Image with uuid {uuid} not found".format(uuid=uuid)
-    )
+    if remove_image(uuid):
+        return make_response(
+            "Successfully deleted image at uuid={uuid}".format(uuid=uuid), 200
+        )
+    else:
+        abort(
+            404,
+            "Image with uuid {uuid} not found".format(uuid=uuid)
+        )

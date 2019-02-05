@@ -25,6 +25,8 @@ def server_cleanup():
 
 def server_main():
     # app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    from database import base
+    base.recreate_database()
     app.run(host='0.0.0.0', port=5000)
 
 

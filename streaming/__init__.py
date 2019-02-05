@@ -2,6 +2,8 @@ import threading
 import gi
 import os
 from streaming.udp_video_mixer import UdpVideoMixer
+from database.api import ClientApi
+from database.base import engine
 gi.require_version("Gst", "1.0")
 gi.require_version("Gtk", "3.0")
 gi.require_version("GstVideo", "1.0")
@@ -108,7 +110,7 @@ def _ensure_gtk_thread_running():
         THREAD_RUNNING = True
 
 
-def create_multi_mixing_pipeline(CLIENTS, mode="other"):
+def create_multi_mixing_pipeline(mode="other"):
     """
     Creates a SurfaceStream video mixing pipeline.
     :param CLIENTS: client dicts denoting connection and stream descriptive data.
@@ -116,42 +118,53 @@ def create_multi_mixing_pipeline(CLIENTS, mode="other"):
     use 'all' to merge alle streams.
     :return:
     """
+    global MERGED_STREAM_WIDTH, MERGED_STREAM_HEIGHT
+
     clear_pipelines()
     _ensure_gtk_thread_running()
+
+    c_api = ClientApi(bind=engine)
+    c_api.open()
+    clients = c_api.get_clients()
     print("################# CREATING MULTI MIXING PIPELINE")
     mixer = UdpVideoMixer(
-        [CLIENTS[k] for k in CLIENTS.keys()],
+        [c.as_dict() for c in clients],
         mode=mode,
         width=MERGED_STREAM_WIDTH,
         height=MERGED_STREAM_HEIGHT
     )
     i = 0
-    for uuid in CLIENTS.keys():
-        in_port = CLIENTS[uuid]["in-port"]
-        out_address = CLIENTS[uuid]["in-ip"]
-        out_port = CLIENTS[uuid]["out-port"]
-        mixer.set_in_port(in_port, i)
-        mixer.set_out_address(out_address, i)
-        mixer.set_out_port(out_port, i)
+    uuid = ""
+    for c in clients:
+        mixer.set_in_port(c.video_src_port, i)
+        mixer.set_out_address(c.ip, i)
+        mixer.set_out_port(c.video_sink_port, i)
+        uuid = c.uuid
         print("#### CLIENT "+ str(i))
-        print(" > in-port" + str(in_port))
-        print(" > out-address" + str(out_address))
-        print(" > out-port" + str(out_port))
+        print(" > video_src_port" + str(c.video_src_port))
+        print(" > ip" + str(c.ip))
+        print(" > video_sink_port" + str(c.video_sink_port))
         i += 1
     PIPELINES[uuid] = mixer
+    c_api.close()
     mixer.start()
 
 
-def update_pipelines(CLIENTS):
+def update_pipelines():
     """
     Function to update current SurfaceStreams pipeline based on connected clients
-    :param CLIENTS: client dicts denoting connection and stream descriptive data.
     :return:
     """
-    if len(CLIENTS) == 0:
+    c_api = ClientApi(bind=engine)
+    c_api.open()
+    len_clients = len(c_api.get_clients())
+    c_api.close()
+
+    if len_clients == 0:
         clear_pipelines()
     else:
-        create_multi_mixing_pipeline(CLIENTS, mode="other" if len(CLIENTS) > 1 else "all")
+        create_multi_mixing_pipeline(mode="other" if len_clients > 1 else "all")
+
     return True
 
 

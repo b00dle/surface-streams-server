@@ -78,18 +78,18 @@ paths:
                   type: string
                 uuid:
                   type: string
-                in-ip:
+                ip:
                   type: string
-                in-port:
+                video_src_port:
                   type: integer
-                out-ip:
-                  type: string
-                out-port:
+                video_sink_port:
                   type: integer
-                streaming-protocol:
+                video_protocol:
                   type: string
-                timestamp:
+                created_datetime:
                   type: string
+                tuio_sink_port:
+                  type: integer
 
     post:
       operationId: clients.create
@@ -109,22 +109,22 @@ paths:
                 type: string
                 description: Name of client to create
                 default: "client"
-              in-port:
+              video_src_port:
                 type: integer
                 description: Port for incoming client stream
                 default: 5001
-              in-ip:
-                type: string
-                description: IP for incoming client stream
-                default: "0.0.0.0"
-              out-port:
+              video_sink_port:
                 type: integer
                 description: Port for outgoing merged stream (-1 means set dynamically)
                 default: -1
-              streaming-protocol:
+              video_protocol:
                 type: string
                 description: Streaming protocol used for incoming and outgoing video stream
                 default: "jpeg"
+              tuio_sink_port:
+                type: integer
+                description: Port used for merged tuio stream (-1 means set dynamically)
+                default: -1
       responses:
         201:
           description: Successfully created client in list
@@ -134,17 +134,17 @@ paths:
                 type: string
               uuid:
                 type: string
-              in-ip:
-                type: string
-              in-port:
+              video_src_port:
                 type: integer
-              out-ip:
+              ip:
                 type: string
-              out-port:
+              video_sink_port:
                 type: integer
-              streaming-protocol:
+              video_protocol:
                 type: string
-              timestamp:
+              tuio_sink_port:
+                type: integer
+              created_datetime:
                 type: string
 
   /clients/{uuid}:
@@ -169,17 +169,15 @@ paths:
                 type: string
               uuid:
                 type: string
-              in-ip:
-                type: string
-              in-port:
+              video_src_port:
                 type: integer
-              out-ip:
+              ip:
                 type: string
-              out-port:
+              video_sink_port:
                 type: integer
-              streaming-protocol:
+              video_protocol:
                 type: string
-              timestamp:
+              created_datetime:
                 type: string
 
     put:
@@ -202,13 +200,13 @@ paths:
               name:
                 type: string
                 default: ""
-              in-ip:
-                type: string
-                default: ""
-              in-port:
+              video_src_port:
                 type: integer
                 default: -1
-              out-port:
+              video_sink_port:
+                type: integer
+                default: -1
+              tuio_sink_port:
                 type: integer
                 default: -1
       responses:
@@ -259,7 +257,7 @@ paths:
                   type: string
                 uuid:
                   type: string
-                timestamp:
+                created_datetime:
                   type: string
 
     post:
@@ -289,9 +287,7 @@ paths:
                 type: string
               uuid:
                 type: string
-              timestamp:
-                type: string
-              data:
+              created_datetime:
                 type: string
 
   /images/{uuid}:

@@ -116,32 +116,32 @@ class UdpVideoMixer(GstPipeline):
         rtp_depay = None
         extra_parse = None
         decoder = None
-        if client["streaming-protocol"] == "jpeg":
+        if client["video_protocol"] == "jpeg":
             # create elements
             udp_src.set_property("caps", Gst.caps_from_string(streaming.JPEG_CAPS))
             rtp_depay = self.make_add_element("rtpgstdepay", "rtp_depay" + str(i))
             decoder = self.make_add_element("jpegdec", "jpeg_decoder" + str(i))
-        elif client["streaming-protocol"] == "vp8":
+        elif client["video_protocol"] == "vp8":
             # create elements
             udp_src.set_property("caps", Gst.caps_from_string(streaming.VP8_CAPS))
             rtp_depay = self.make_add_element("rtpvp8depay", "rtp_depay" + str(i))
             decoder = self.make_add_element("vp8dec", "vp8_decoder" + str(i))
-        elif client["streaming-protocol"] == "vp9":
+        elif client["video_protocol"] == "vp9":
             # create elements
             udp_src.set_property("caps", Gst.caps_from_string(streaming.VP9_CAPS))
             rtp_depay = self.make_add_element("rtpvp9depay", "rtp_depay" + str(i))
             decoder = self.make_add_element("vp9dec", "vp9_decoder" + str(i))
-        elif client["streaming-protocol"] == "mp4":
+        elif client["video_protocol"] == "mp4":
             # create elements
             udp_src.set_property("caps", Gst.caps_from_string(streaming.MP4_CAPS))
             rtp_depay = self.make_add_element("rtpmp4vdepay", "rtp_depay" + str(i))
             decoder = self.make_add_element("avdec_mpeg4", "mp4_decoder" + str(i))
-        elif client["streaming-protocol"] == "h264":
+        elif client["video_protocol"] == "h264":
             # create elements
             udp_src.set_property("caps", Gst.caps_from_string(streaming.H264_CAPS))
             rtp_depay = self.make_add_element("rtph264depay", "rtp_depay" + str(i))
             decoder = self.make_add_element("avdec_h264", "h264_decoder" + str(i))
-        elif client["streaming-protocol"] == "h265":
+        elif client["video_protocol"] == "h265":
             udp_src.set_property("caps", Gst.caps_from_string(streaming.H265_CAPS))
             rtp_depay = self.make_add_element("rtph265depay", "h265_depay" + str(i))
             extra_parse = self.make_add_element("h265parse", "extra_parse" + str(i))
@@ -177,28 +177,28 @@ class UdpVideoMixer(GstPipeline):
         videoconvert = self.make_add_element("videoconvert", "mixer_convert" + str(i))
         encoder = None
         rtp_packer = None
-        if client["streaming-protocol"] == "jpeg":
+        if client["video_protocol"] == "jpeg":
             encoder = self.make_add_element("jpegenc", "jpeg_encoder" + str(i))
             rtp_packer = self.make_add_element("rtpgstpay", "rtp_packer" + str(i))
-        elif client["streaming-protocol"] == "vp8":
+        elif client["video_protocol"] == "vp8":
             encoder = self.make_add_element("vp8enc", "vp8_encoder" + str(i))
             #encoder.set_property("target-bitrate", 4096*1000)
             rtp_packer = self.make_add_element("rtpvp8pay", "rtp_packer" + str(i))
-        elif client["streaming-protocol"] == "vp9":
+        elif client["video_protocol"] == "vp9":
             encoder = self.make_add_element("vp9enc", "vp9_encoder" + str(i))
             rtp_packer = self.make_add_element("rtpvp9pay", "rtp_packer" + str(i))
-        elif client["streaming-protocol"] == "mp4":
+        elif client["video_protocol"] == "mp4":
             encoder = self.make_add_element("avenc_mpeg4", "mp4_encoder" + str(i))
             rtp_packer = self.make_add_element("rtpmp4vpay", "rtp_packer" + str(i))
             rtp_packer.set_property("config-interval", 3)
-        elif client["streaming-protocol"] == "h264":
+        elif client["video_protocol"] == "h264":
             encoder = self.make_add_element("x264enc", "h264_encoder" + str(i))
             encoder.set_property("tune", "zerolatency")
             encoder.set_property("speed-preset", 4) # 1 fast but low encoding to 2 slow but high encoding
             encoder.set_property("pass", 5)
             encoder.set_property("quantizer", 22)
             rtp_packer = self.make_add_element("rtph264pay", "rtp_packer" + str(i))
-        elif client["streaming-protocol"] == "h265":
+        elif client["video_protocol"] == "h265":
             encoder = self.make_add_element("x265enc", "h265_encoder" + str(i))
             encoder.set_property("tune", "zerolatency")
             encoder.set_property("log-level", "full")
