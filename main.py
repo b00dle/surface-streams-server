@@ -7,6 +7,7 @@ app = connexion.App(__name__, specification_dir='./')
 # Read the swagger.yml file to configure the endpoints
 app.add_api('swagger.yml')
 
+tuio_process = None
 
 # Create a URL route in our application for "/"
 @app.route('/')
@@ -20,13 +21,19 @@ def home():
 
 
 def server_cleanup():
+    global tuio_process
     images.remove_all()
+    tuio_process.terminate()
 
 
 def server_main():
     # app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
     from database import base
+    from streaming.osc_receiver import TuioForwardReceiver
+    global tuio_process
     base.recreate_database()
+    tuio_process = TuioForwardReceiver(ip='0.0.0.0', port=5001)
+    tuio_process.start()
     app.run(host='0.0.0.0', port=5000)
 
 
