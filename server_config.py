@@ -37,7 +37,7 @@ def update(config):
     if width > 0 and height > 0:
         streaming.MERGED_STREAM_WIDTH = width
         streaming.MERGED_STREAM_HEIGHT = height
-        streaming.update_pipelines(clients.CLIENTS)
+        streaming.update_pipelines()
         return make_response("Update the current SurfaceStreams server config", 200)
     # otherwise, nope, that's an error
     else:
