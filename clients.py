@@ -33,14 +33,16 @@ def create_client(name, video_src_port, ip, video_sink_port, streaming_protocol,
     :param video_src_port: incoming stream port
     :return: Returns the uuid and dict values of the created client.
     """
+    c_api = ClientApi(bind=engine)
+    c_api.open()
+    num_clients = len(c_api.get_clients())
+
     new_uuid = create_uuid()
     ip = ip if len(ip) > 0 else "0.0.0.0"
-    video_src_port = video_src_port if video_src_port > 0 else 5000 + 3 * len(CLIENTS) + 1
+    video_src_port = video_src_port if video_src_port > 0 else 5001 + 3 * num_clients + 1
     video_sink_port = video_sink_port if video_sink_port > 0 else video_src_port + 1
     tuio_port = tuio_port if tuio_port > 0 else video_sink_port + 1
 
-    c_api = ClientApi(bind=engine)
-    c_api.open()
     c = c_api.add_client(
         new_uuid, name, ip if len(ip) > 0 else "0.0.0.0",
         video_src_port, video_sink_port, streaming_protocol, tuio_port
