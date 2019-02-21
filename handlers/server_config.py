@@ -5,7 +5,6 @@ including merged-stream-width & merged-stream-height.
 """
 
 # System modules
-import clients
 import streaming
 
 # 3rd party modules

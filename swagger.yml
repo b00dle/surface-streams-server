@@ -14,7 +14,7 @@ basePath: /api
 paths:
   /server-config:
     get:
-      operationId: server_config.read_all
+      operationId: handlers.server_config.read_all
       tags:
         - server-config
       summary: Read the current SurfaceStreams server config
@@ -30,7 +30,7 @@ paths:
                 type: integer
 
     put:
-      operationId: server_config.update
+      operationId: handlers.server_config.update
       tags:
       - server-config
       summary: Update the current SurfaceStreams server config
@@ -51,7 +51,7 @@ paths:
 
   /clients:
     get:
-      operationId: clients.read_all
+      operationId: handlers.clients.read_all
       tags:
         - clients
       summary: Read the entire list of clients
@@ -92,7 +92,7 @@ paths:
                   type: integer
 
     post:
-      operationId: clients.create
+      operationId: handlers.clients.create
       tags:
         - clients
       summary: Create a client and add it to the clients list
@@ -149,7 +149,7 @@ paths:
 
   /clients/{uuid}:
     get:
-      operationId: clients.read_one
+      operationId: handlers.clients.read_one
       tags:
         - clients
       summary: Read one client from the clients list
@@ -181,7 +181,7 @@ paths:
                 type: string
 
     put:
-      operationId: clients.update
+      operationId: handlers.clients.update
       tags:
         - clients
       summary: Update a client in the clients list
@@ -214,7 +214,7 @@ paths:
           description: Successfully updated client in clients list
 
     delete:
-      operationId: clients.delete
+      operationId: handlers.clients.delete
       tags:
         - clients
       summary: Delete a client from the clients list
@@ -230,7 +230,7 @@ paths:
 
   /images:
     get:
-      operationId: images.read_all
+      operationId: handlers.images.read_all
       tags:
         - images
       summary: Read the entire list of images
@@ -261,7 +261,7 @@ paths:
                   type: string
 
     post:
-      operationId: images.create
+      operationId: handlers.images.create
       tags:
         - images
       summary: Create a image and add it to the images list
@@ -292,7 +292,7 @@ paths:
 
   /images/{uuid}:
     get:
-      operationId: images.read
+      operationId: handlers.images.read
       tags:
         - images
       summary: Read the entire list of images
@@ -309,7 +309,7 @@ paths:
             type: file
 
     put:
-      operationId: images.fill
+      operationId: handlers.images.fill
       tags:
         - images
       summary: Fill a image and add it to the images list
@@ -329,7 +329,7 @@ paths:
           description: Successfully created image in list
 
     delete:
-      operationId: images.delete
+      operationId: handlers.images.delete
       tags:
         - images
       summary: Delete an image from the images list

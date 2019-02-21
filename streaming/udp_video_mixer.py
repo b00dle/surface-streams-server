@@ -7,6 +7,7 @@ from streaming.gst_pipeline import GstPipeline
 from streaming.stats_monitor import UdpStatsMonitor
 import streaming
 
+
 class UdpVideoMixer(GstPipeline):
     """
     Class Managing SurfaceStreams GStreamer pipeline.

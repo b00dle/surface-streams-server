@@ -1,13 +1,16 @@
 import connexion
 from flask import render_template
-import images
+from handlers import images
+from streaming.tuio_forward_receiver import TuioForwardReceiver
+from database import base
 
-# Create the application instance
+# Create the ReST API application instance
 app = connexion.App(__name__, specification_dir='./')
 # Read the swagger.yml file to configure the endpoints
 app.add_api('swagger.yml')
+# Create the TUIO forwarder instance
+tuio_forwarding = TuioForwardReceiver(ip='0.0.0.0', port=5001)
 
-tuio_process = None
 
 # Create a URL route in our application for "/"
 @app.route('/')
@@ -21,19 +24,13 @@ def home():
 
 
 def server_cleanup():
-    global tuio_process
     images.remove_all()
-    tuio_process.terminate()
+    tuio_forwarding.terminate()
 
 
 def server_main():
-    # app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
-    from database import base
-    from streaming.osc_receiver import TuioForwardReceiver
-    global tuio_process
     base.recreate_database()
-    tuio_process = TuioForwardReceiver(ip='0.0.0.0', port=5001)
-    tuio_process.start()
+    tuio_forwarding.start()
     app.run(host='0.0.0.0', port=5000)
 
 
