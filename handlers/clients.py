@@ -25,7 +25,7 @@ def create_uuid():
 CLIENT_LIMIT = 3
 
 
-def create_client(name, video_src_port, ip, video_sink_port, streaming_protocol, tuio_port):
+def create_client(name, video_src_port, ip, video_sink_port, streaming_protocol, tuio_port, mixing_mode):
     """
     Helper function to create a client.
     :param name: name of the client
@@ -45,7 +45,8 @@ def create_client(name, video_src_port, ip, video_sink_port, streaming_protocol,
 
     c = c_api.add_client(
         new_uuid, name, ip if len(ip) > 0 else "0.0.0.0",
-        video_src_port, video_sink_port, streaming_protocol, tuio_port
+        video_src_port, video_sink_port, streaming_protocol, tuio_port,
+        mixing_mode
     )
     c_api.commit()
     res = c.as_dict()
@@ -113,8 +114,10 @@ def create(client):
     video_sink_port = client.get("video_sink_port", -1)
     video_protocol = client.get("video_protocol", "jpeg")
     tuio_sink_port = client.get("tuio_sink_port", -1)
+    mixing_mode = client.get("mixing_mode", "other")
 
-    return create_client(name, video_src_port, ip, video_sink_port, video_protocol, tuio_sink_port)
+    return create_client(name, video_src_port, ip, video_sink_port,
+                         video_protocol, tuio_sink_port, mixing_mode)
 
 
 def update(uuid, client):
@@ -139,12 +142,14 @@ def update(uuid, client):
     video_src_port = client.get("video_src_port", -1)
     video_sink_port = client.get("video_sink_port", -1)
     tuio_sink_port = client.get("tuio_sink_port", -1)
+    mixing_mode = client.get("mixing_mode", "other")
 
     c.name = n if len(n) > 0 else c.name
     c.ip = ip if len(ip) > 0 else c.ip
     c.video_src_port = video_src_port if video_src_port > 0 else c.video_src_port
     c.video_sink_port = video_sink_port if video_sink_port > 0 else c.video_sink_port
     c.tuio_sink_port = tuio_sink_port if tuio_sink_port > 0 else c.tuio_sink_port
+    c.mixing_mode = mixing_mode
     c.created_datetime = datetime.now()
 
     c_api.commit()

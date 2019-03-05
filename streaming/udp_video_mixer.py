@@ -36,17 +36,17 @@ class UdpVideoMixer(GstPipeline):
         }
     ]
 
-    def __init__(self, clients, mode="other", width=640, height=480):
+    def __init__(self, clients, default_mode="other", width=640, height=480):
         """
         Constructor.
         :param clients: List of client dicts denoting client count and stream protocol
-        :param mode: 'all' for overlaying all streams and
+        :param default_mode: 'all' for overlaying all streams and
         'other' for merging other clients streams per client.
         :param width: pixel width of the output stream
         :param height: pixel height of the output stream
         """
-        if mode != "other" and mode != "all":
-            raise ValueError("Unknown mode '"+mode+"'n  > 'other' and 'all' are supported.")
+        if default_mode != "other" and default_mode != "all":
+            raise ValueError("Unknown mode '" + default_mode + "'n  > 'other' and 'all' are supported.")
 
         super().__init__("Udp-Multi-Video-Mixer")
 
@@ -73,7 +73,7 @@ class UdpVideoMixer(GstPipeline):
         # create and link tee inputs to mixer
         for i in range(0, len(clients)):
             for tee_idx in range(0, len(clients)):
-                if mode == "other" and tee_idx == i:
+                if tee_idx == i and len(clients) > 1 and clients[i]["mixing_mode"] == "other":
                     continue
                 name_post_fix = str(i) + "-t" + str(tee_idx)
                 mixer_queue = self.make_add_element("queue", "mixer_queue"+name_post_fix)

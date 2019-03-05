@@ -129,7 +129,7 @@ def create_multi_mixing_pipeline(mode="other"):
     print("################# CREATING MULTI MIXING PIPELINE")
     mixer = UdpVideoMixer(
         [c.as_dict() for c in clients],
-        mode=mode,
+        default_mode=mode,
         width=MERGED_STREAM_WIDTH,
         height=MERGED_STREAM_HEIGHT
     )

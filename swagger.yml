@@ -92,6 +92,8 @@ paths:
                   type: string
                 tuio_sink_port:
                   type: integer
+                mixing_mode:
+                  type: string
 
     post:
       operationId: handlers.clients.create
@@ -127,6 +129,10 @@ paths:
                 type: integer
                 description: Port used for merged tuio stream (-1 means set dynamically)
                 default: -1
+              mixing_mode:
+                type: string
+                description: Rule used to mix several client video streams ('other' means only other client streams are overlayed. 'all' means clients own streams is mixed in as well.)
+                default: "other"
       responses:
         201:
           description: Successfully created client in list
@@ -149,6 +155,8 @@ paths:
               tuio_sink_port:
                 type: integer
               created_datetime:
+                type: string
+              mixing_mode:
                 type: string
 
   /clients/{uuid}:
@@ -185,6 +193,8 @@ paths:
                 type: string
               created_datetime:
                 type: string
+              mixing_mode:
+                type: string
 
     put:
       operationId: handlers.clients.update
@@ -215,6 +225,9 @@ paths:
               tuio_sink_port:
                 type: integer
                 default: -1
+              mixing_mode:
+                type: string
+                default: "other"
       responses:
         200:
           description: Successfully updated client in clients list

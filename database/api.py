@@ -69,13 +69,14 @@ class ClientApi(Api):
     def __init__(self, bind):
         super().__init__(bind)
 
-    def add_client(self, uuid, name, ip, video_src_port=-1, video_sink_port=-1, video_protocol="jpeg", tuio_sink_port=-1):
+    def add_client(self, uuid, name, ip, video_src_port=-1, video_sink_port=-1, video_protocol="jpeg", tuio_sink_port=-1, mixing_mode="other"):
         c = tables.Client(
             uuid=uuid, name=name, ip=ip,
             video_src_port=video_src_port,
             video_sink_port=video_sink_port,
             video_protocol=video_protocol,
-            tuio_sink_port=tuio_sink_port
+            tuio_sink_port=tuio_sink_port,
+            mixing_mode=mixing_mode
         )
         self.insert(c)
         return c
