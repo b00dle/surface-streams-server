@@ -9,7 +9,9 @@ class Client(TableBase):
 
     __tablename__ = 'client'
 
-    uuid = Column(String(128), primary_key=True)
+    id = Column(Integer, primary_key=True)
+
+    uuid = Column(String(128), unique=True, nullable=False)
 
     name = Column(String(256), nullable=False)
 

@@ -74,6 +74,8 @@ paths:
             type: array
             items:
               properties:
+                id:
+                  type: integer
                 name:
                   type: string
                 uuid:
@@ -130,6 +132,8 @@ paths:
           description: Successfully created client in list
           schema:
             properties:
+              id:
+                type: integer
               name:
                 type: string
               uuid:
@@ -165,6 +169,8 @@ paths:
           description: Successfully read client from clients list operation
           schema:
             properties:
+              id:
+                type: integer
               name:
                 type: string
               uuid:
