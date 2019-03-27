@@ -82,6 +82,7 @@ class UdpVideoMixer(GstPipeline):
                 capsfilter.set_property("caps", Gst.caps_from_string("video/x-raw, width=" + str(width) + ", height=" + str(height) + ""))
                 alpha = self.make_add_element("alpha", "alpha"+name_post_fix)
                 alpha.set_property("method", "green")
+                alpha.set_property("angle", 50)
                 # get and link tee src pad to mixer queue sink pad
                 tee_src_pad_template = self.tees[tee_idx].get_pad_template("src_%u")
                 tee_src = self.tees[tee_idx].request_pad(tee_src_pad_template, None, None)
