@@ -5,7 +5,7 @@ including merged-stream-width & merged-stream-height.
 """
 
 # System modules
-import streaming
+import video_mixing
 
 # 3rd party modules
 from flask import make_response, abort
@@ -18,8 +18,8 @@ def read_all():
     :return:        json string of config values
     """
     return {
-        "merged-stream-width": streaming.MERGED_STREAM_WIDTH,
-        "merged-stream-height": streaming.MERGED_STREAM_HEIGHT
+        "merged-stream-width": video_mixing.MERGED_STREAM_WIDTH,
+        "merged-stream-height": video_mixing.MERGED_STREAM_HEIGHT
     }
 
 
@@ -34,9 +34,9 @@ def update(config):
 
     # Does the client exist in clients?
     if width > 0 and height > 0:
-        streaming.MERGED_STREAM_WIDTH = width
-        streaming.MERGED_STREAM_HEIGHT = height
-        streaming.update_pipelines()
+        video_mixing.MERGED_STREAM_WIDTH = width
+        video_mixing.MERGED_STREAM_HEIGHT = height
+        video_mixing.update_pipelines()
         return make_response("Update the current SurfaceStreams server config", 200)
     # otherwise, nope, that's an error
     else:
