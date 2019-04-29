@@ -1,7 +1,8 @@
 import connexion
+
 from flask import render_template
 from handlers import images
-from streaming.tuio_forward_receiver import TuioForwardReceiver
+from tuio_forwarding import TuioForwardingServer
 from database import base
 
 # Create the ReST API application instance
@@ -9,7 +10,7 @@ app = connexion.App(__name__, specification_dir='./')
 # Read the swagger.yml file to configure the endpoints
 app.add_api('swagger.yml')
 # Create the TUIO forwarder instance
-tuio_forwarding = TuioForwardReceiver(ip='0.0.0.0', port=5001)
+tuio_forwarding = TuioForwardingServer(ip='0.0.0.0', port=5001)
 
 
 # Create a URL route in our application for "/"
@@ -35,8 +36,8 @@ def server_main():
 
 
 def plotting_main():
-    from plotting import stats_plotter
-    stats_plotter.plot_monitor_stats([
+    import plotting
+    plotting.plot_monitor_stats([
         "measurements/mp4-480-320.txt",
         "measurements/mp4-640-480.txt",
         "measurements/mp4-1280-960.txt"

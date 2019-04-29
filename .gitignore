@@ -113,3 +113,9 @@ venv.bak/
 
 # server data
 SERVER_DATA/
+
+# pycharm project setup
+.idea/
+
+# session database
+surface_streams.db

@@ -1,10 +1,10 @@
 from database.base import engine
 from database.api import ClientApi
-from streaming.osc_receiver import OscReceiver
+from core.tuio.osc_receiver import OscReceiver
 from pythonosc import dispatcher, udp_client
 
 
-def tuio_forwarder(path, *lst):
+def forward_tuio_message(path, *lst):
     c_api = ClientApi(bind=engine)
     c_api.open()
     for c in c_api.get_clients():
@@ -15,12 +15,12 @@ def tuio_forwarder(path, *lst):
     c_api.close()
 
 
-class TuioForwardDispatcher(dispatcher.Dispatcher):
+class TuioForwardingDispatcher(dispatcher.Dispatcher):
     def __init__(self):
         super().__init__()
-        self.set_default_handler(tuio_forwarder)
+        self.set_default_handler(forward_tuio_message)
 
 
-class TuioForwardReceiver(OscReceiver):
+class TuioForwardingServer(OscReceiver):
     def __init__(self, ip, port):
-        super().__init__(ip, port, TuioForwardDispatcher())
+        super().__init__(ip, port, TuioForwardingDispatcher())

@@ -6,7 +6,7 @@ CLIENTS collection
 # System modules
 from datetime import datetime
 import uuid
-import streaming
+import video_mixing
 
 # 3rd party modules
 from flask import make_response, abort
@@ -52,7 +52,7 @@ def create_client(name, video_src_port, ip, video_sink_port, streaming_protocol,
     res = c.as_dict()
     c_api.close()
 
-    streaming.update_pipelines()
+    video_mixing.update_pipelines()
     return res
 
 
@@ -156,7 +156,7 @@ def update(uuid, client):
     res = c.as_dict()
     c_api.close()
 
-    streaming.update_pipelines()
+    video_mixing.update_pipelines()
 
     return res
 
@@ -181,7 +181,7 @@ def delete(uuid):
     c_api.commit()
     c_api.close()
 
-    if streaming.update_pipelines():
+    if video_mixing.update_pipelines():
         return make_response(
             "{name} successfully deleted at uuid={uuid}".format(name=name, uuid=uuid), 200
         )
